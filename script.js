@@ -1,4 +1,5 @@
 const continentSelect = document.getElementById('continent-select')
+const countryList = document.getElementById('countries-list')
 
 queryFetch(
     `
@@ -19,13 +20,38 @@ queryFetch(
     })
 })
 
+continentSelect.addEventListener('change', async e => {
+    const continentCode = e.target.value
+    const countries = await getContinentCountries(continentCode)
+    countryList.innerHTML = ''
+    countries.forEach(country => {
+        const element = document.createElement('div')
+        element.innerText = country.name
+        countryList.append(element)
+    })
+})
 
-function queryFetch(query) {
+function getContinentCountries(continentCode) {
+    return queryFetch(`
+        query getCountries($code: String) {
+            continent(code: $code) {
+            countries {
+                name
+                }
+            }
+        }
+    `, { code: continentCode}).then(data => {
+        return data.data.continent.countries
+    })
+}
+
+function queryFetch(query, variables) {
     return fetch('http://countries.trevorblades.com/', {
     method: 'POST',
     headers: { "Content-Type" : "application/json" },
     body: JSON.stringify({
-        query: query
+        query: query,
+        variables: variables
         })
     }).then(res => res.json())
 }
